@@ -1,0 +1,49 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:ReplaceAllMacroGenerator.ViewModels"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" Width="350" Height="350"
+        x:Class="ReplaceAllMacroGenerator.Views.MainWindow"
+        Icon="/Assets/avalonia-logo.ico"
+        Title="Replace All Macro Generator"
+        CanResize="False">
+
+  <Grid RowDefinitions="auto,*,auto,auto"
+        Margin="5 5 5 5">
+    
+    <TextBlock Text="Replacements" Grid.Row="0"/>
+
+      <ItemsRepeater Grid.Row="1" Items="{Binding POInformation}">
+        <ItemsRepeater.ItemTemplate>
+          <DataTemplate>
+            <Grid ColumnDefinitions="auto,auto">
+              <TextBlock Grid.Column="0" Text="{Binding OldPO}"/>
+              <TextBlock Grid.Column="1" Text="{Binding NewPO}"/>
+            </Grid>
+          </DataTemplate>
+        </ItemsRepeater.ItemTemplate>
+      </ItemsRepeater>
+
+    <StackPanel Grid.Row="2" Spacing="55" Orientation="Horizontal"
+                HorizontalAlignment="Center">
+      <RadioButton IsChecked="True" Content="LibreOffice Calc"
+                   GroupName="MacroType"
+                   CommandParameter="Calc"
+                   Command="{Binding MacroTypeCheckedChangedCommand}"/>
+      <RadioButton IsChecked="False" Content="Microsoft Excel"
+                   GroupName="MacroType"
+                   CommandParameter="Excel"
+                   Command="{Binding MacroTypeCheckedChangedCommand}"/>
+    </StackPanel>
+
+
+    <StackPanel Grid.Row="3" Spacing="75" Orientation="Horizontal"
+                HorizontalAlignment="Center">
+      <Button Content="Add" Command="{Binding AddCommand}"/>
+      <Button Content="Load" Command="{Binding LoadCommand}"/>
+      <Button Content="Generate" Command="{Binding GenerateCommand}"/>
+    </StackPanel>
+    
+  </Grid>
+</Window>
