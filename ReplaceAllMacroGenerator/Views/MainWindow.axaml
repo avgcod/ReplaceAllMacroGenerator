@@ -3,27 +3,30 @@
         xmlns:vm="using:ReplaceAllMacroGenerator.ViewModels"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        mc:Ignorable="d" Width="350" Height="350"
+        mc:Ignorable="d" Width="350" Height="375"
         x:Class="ReplaceAllMacroGenerator.Views.MainWindow"
         Icon="/Assets/avalonia-logo.ico"
         Title="Replace All Macro Generator"
         CanResize="False">
 
   <Grid RowDefinitions="auto,*,auto,auto"
-        Margin="5 5 5 5">
-    
+        Margin="5">
+
     <TextBlock Text="Replacements" Grid.Row="0"/>
 
-      <ItemsRepeater Grid.Row="1" Items="{Binding POInformation}">
+    <ScrollViewer Grid.Row="1" Margin="2" HorizontalScrollBarVisibility="Auto"
+                  VerticalScrollBarVisibility="Auto">
+      <ItemsRepeater ItemsSource="{Binding PoInformation}">
         <ItemsRepeater.ItemTemplate>
           <DataTemplate>
-            <Grid ColumnDefinitions="auto,auto">
-              <TextBlock Grid.Column="0" Text="{Binding OldPO}"/>
-              <TextBlock Grid.Column="1" Text="{Binding NewPO}"/>
+            <Grid ColumnDefinitions="auto,auto" >
+              <TextBlock Grid.Column="0" Text="{Binding OldPO}" Margin="2"/>
+              <TextBlock Grid.Column="1" Text="{Binding NewPO}" Margin="2"/>
             </Grid>
           </DataTemplate>
         </ItemsRepeater.ItemTemplate>
       </ItemsRepeater>
+    </ScrollViewer>      
 
     <StackPanel Grid.Row="2" Spacing="55" Orientation="Horizontal"
                 HorizontalAlignment="Center">
@@ -44,6 +47,6 @@
       <Button Content="Load" Command="{Binding LoadCommand}"/>
       <Button Content="Generate" Command="{Binding GenerateCommand}"/>
     </StackPanel>
-    
+
   </Grid>
 </Window>

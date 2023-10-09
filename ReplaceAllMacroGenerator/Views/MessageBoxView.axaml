@@ -13,7 +13,8 @@
               Spacing="10"
               Margin="0 5 0 0">
 
-    <TextBlock Text="{Binding MessageText}" HorizontalAlignment="Center"/>
+    <TextBlock Text="{Binding MessageText}"
+               HorizontalAlignment="Center"/>
 
     <Button Content="OK"
             HorizontalContentAlignment="Center"
@@ -21,7 +22,7 @@
             Command="{Binding OKCommand}"
             Margin="0 0 5 0"
             Width="50"
-            x:Name="btnOk"/>
+            IsDefault="True"/>
 
   </StackPanel>
 </Window>

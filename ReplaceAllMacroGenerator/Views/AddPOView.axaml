@@ -1,0 +1,55 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="200" d:DesignHeight="125"
+        MinWidth="150" MinHeight="125"
+        Width="150" Height="125"
+        x:Class="ReplaceAllMacroGenerator.Views.AddPOView"
+        Title="Add PO">
+
+  <Grid Margin="5">
+    <Grid.ColumnDefinitions>
+      <ColumnDefinition Width="auto"/>
+      <ColumnDefinition Width="*"/>
+    </Grid.ColumnDefinitions>
+
+    <Grid.RowDefinitions>
+      <RowDefinition Height="auto"/>
+      <RowDefinition Height="auto"/>
+      <RowDefinition Height="*"/>
+    </Grid.RowDefinitions>
+    
+    <TextBlock Grid.Row="0"
+               Grid.Column="0"
+               VerticalAlignment="Center"
+               Text="Old PO:"/>
+    <TextBox Grid.Row="0"
+             Grid.Column="1"
+             MinWidth="75"
+             Text="{Binding OldPO}"/>
+
+    <TextBlock Grid.Row="1"
+               Grid.Column="0"
+               VerticalAlignment="Center"
+               Text="New PO:"/>
+    <TextBox Grid.Row="1"
+             Grid.Column="1"
+             Margin="0 5"
+             MinWidth="75"
+             Text="{Binding NewPO}"/>
+
+    <Button Grid.Row="2"
+            Grid.Column="0"
+            VerticalAlignment="Bottom"
+            Content="Cancel"
+            Command="{Binding CancelCommand}"/>
+    <Button Grid.Row="2"
+            Grid.Column="1"
+            VerticalAlignment="Bottom"
+            HorizontalAlignment="Right"
+            Content="OK"
+            IsDefault="True"
+            Command="{Binding OKCommand}"/>
+  </Grid>
+</Window>

@@ -1,79 +1,178 @@
 ﻿using Avalonia.Controls;
-using ReactiveUI;
-using System.Windows.Input;
-using ReplaceAllMacroGenerator.Commands;
-using System.ComponentModel;
-using System.Collections.ObjectModel;
 using System.Collections.Generic;
-using DynamicData;
-using ReplaceAllMacroGenerator.Helpers;
+using ReplaceAllMacroGenerator.Models;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
+using System.Threading.Tasks;
+using ReplaceAllMacroGenerator.Services;
+using Avalonia.Platform.Storage;
+using System.Collections.ObjectModel;
+using ReplaceAllMacroGenerator.Views;
+using System;
+using System.Linq;
 
 namespace ReplaceAllMacroGenerator.ViewModels
 {
-    public class MainWindowViewModel : ViewModelBase
+    public partial class MainWindowViewModel : ViewModelBase
     {
-        private bool _isCalcMacro = true;
-        public bool IsCalcMacro
-        {
-            get
-            {
-                return _isCalcMacro;
-            }
-            set
-            {
-                this.RaiseAndSetIfChanged(ref _isCalcMacro, value);
-            }
-        }
-
-        private bool _isGenerating = false;
-        public bool IsGenerating
-        {
-            get
-            {
-                return _isGenerating;
-            }
-            set
-            {
-                this.RaiseAndSetIfChanged(ref _isGenerating, value);
-            }
-        }
-
-        private List<POInfo> _poInformation = new List<POInfo>();
-        public IEnumerable<POInfo> POInformation => _poInformation;
-
-        #region Variables
         private readonly Window _parentWindow;
-        #endregion
 
-        #region Commands
-        public ICommand AddCommand { get; }
-        public ICommand LoadCommand { get; }
-        public ICommand GenerateCommand { get; }
-        public ICommand MacroTypeCheckedChangedCommand { get; }
-        #endregion
+        [ObservableProperty]
+        private bool _isCalcMacro = true;
+
+        [ObservableProperty]
+        [NotifyCanExecuteChangedFor(nameof(LoadCommand))]
+        [NotifyCanExecuteChangedFor(nameof(AddCommand))]
+        [NotifyCanExecuteChangedFor(nameof(GenerateCommand))]
+        private bool _isAdding = false;
+
+        [ObservableProperty]
+        [NotifyCanExecuteChangedFor(nameof(LoadCommand))]
+        [NotifyCanExecuteChangedFor(nameof(AddCommand))]
+        [NotifyCanExecuteChangedFor(nameof(GenerateCommand))]
+        private bool _isGenerating = false;
+
+        [ObservableProperty]
+        [NotifyCanExecuteChangedFor(nameof(GenerateCommand))]
+        public ObservableCollection<POInfo> _poInformation = new ObservableCollection<POInfo>();
+
+        public bool CanAdd => !IsGenerating && !IsAdding;
+        public bool CanGenerate => PoInformation.Any()
+                && !IsGenerating && !IsAdding;              
 
         public MainWindowViewModel(Window parentWindow)
         {
             _parentWindow = parentWindow;
-
-            AddCommand = new AddCommand(_parentWindow, this);
-            LoadCommand = new LoadCommand(parentWindow, this);
-            GenerateCommand = new GenerateCommand(parentWindow, this);
-            MacroTypeCheckedChangedCommand = new MacroTypeCheckedChangedCommand(parentWindow, this);
-
         }
 
-        public void AddPOInformation(IEnumerable<POInfo> theInformation)
+        #region Commands
+        [RelayCommand]
+        public void MacroTypeCheckedChanged(object? parameter)
         {
-            _poInformation.Clear();
-            _poInformation.AddRange(theInformation);
-            this.RaisePropertyChanged(nameof(POInformation));
+            string macroType = parameter?.ToString() ?? string.Empty;
+            if (!string.IsNullOrWhiteSpace(macroType) && macroType == "Calc")
+            {
+                IsCalcMacro = true;
+            }
+            else if (!string.IsNullOrWhiteSpace(macroType) && macroType != "Calc")
+            {
+                IsCalcMacro = false;
+            }
         }
 
-        public void AddPOInformation(POInfo theInformation)
+        [RelayCommand(CanExecute = nameof(CanAdd))]
+        public async Task Load()
         {
-            _poInformation.Add(theInformation);
-            this.RaisePropertyChanged(nameof(POInformation));
+            IsAdding = true;
+
+            IStorageFile? selectedFile = await FileAccessService.ChooseCSVFileAsync(_parentWindow);
+            if (selectedFile != null)
+            {
+                string? fileName = await selectedFile?.SaveBookmarkAsync();
+                if (!string.IsNullOrEmpty(fileName))
+                {
+                    AddInformation(await FileAccessService.LoadCSVAsync(fileName));
+                }
+            }
+
+            IsAdding = false;
+        }
+
+        [RelayCommand(CanExecute = nameof(CanAdd))]
+        public async Task Add()
+        {
+            IsAdding = true;
+
+            AddPOView addView = new AddPOView();
+            addView.DataContext = new AddPOViewModel(addView);
+            await addView.ShowDialog(_parentWindow);
+
+            if (((AddPOViewModel)addView.DataContext).OKResult)
+            {
+                AddInformation(new POInfo()
+                {
+                    OldPO = ((AddPOViewModel)addView.DataContext).OldPO,
+                    NewPO = ((AddPOViewModel)addView.DataContext).NewPO
+                });
+            }
+
+            IsAdding = false;
+        }
+
+        [RelayCommand(CanExecute = nameof(CanGenerate))]
+        public async Task Generate()
+        {
+            IsGenerating = true;
+
+            IEnumerable<string> generatedMacro;
+
+            IStorageFile? selectedFile = await FileAccessService.ChooseBASFileAsync(_parentWindow);
+
+            if (selectedFile != null)
+            {
+                string? fileName = await selectedFile?.SaveBookmarkAsync();
+
+                if (!string.IsNullOrWhiteSpace(fileName))
+                {
+                    if (IsCalcMacro)
+                    {
+                        generatedMacro = GenerateCalcMacro();
+                    }
+                    else
+                    {
+                        generatedMacro = GenerateExcelMacro();
+                    }
+
+                    await FileAccessService.SaveMacroFileAsync(generatedMacro, fileName);
+                }
+
+                MessageBoxView mboxView = new MessageBoxView();
+                mboxView.DataContext = new MessageBoxViewModel(mboxView, "Macro Generated");
+                await mboxView.ShowDialog(_parentWindow);
+            }
+
+            IsGenerating = false;
+        } 
+        #endregion
+
+        public void AddInformation(List<POInfo> theInformation)
+        {
+            PoInformation = new ObservableCollection<POInfo>(theInformation);
+        }
+
+        public void AddInformation(POInfo theInformation)
+        {
+            PoInformation.Add(theInformation);
+        }
+
+        private IEnumerable<string> GenerateExcelMacro()
+        {
+            string firstLine = "Sub FindReplaceAll()" + Environment.NewLine + "'PURPOSE: Find & Replace text/values throughout a specific sheet" + Environment.NewLine + "'SOURCE: www.TheSpreadsheetGuru.com" + Environment.NewLine + Environment.NewLine + "Dim sht As Worksheet" + Environment.NewLine + "Dim fnd As Variant" + Environment.NewLine + "Dim rplc As Variant" + Environment.NewLine + Environment.NewLine + "'Store a specfic sheet to a variable" + Environment.NewLine + "Set sht = Sheets(\"Sheet1\")";
+            string lastLine = Environment.NewLine + "End Sub";
+            List<string> infoList = new List<string>();
+            string empty = string.Empty;
+            infoList.Add(firstLine);
+            foreach (POInfo currentPOInfo in PoInformation)
+            {
+                infoList.Add("fnd = \"" + currentPOInfo.OldPO + "\"" + Environment.NewLine + "rplc = \"" + currentPOInfo.NewPO + "\"" + Environment.NewLine + "sht.Cells.Replace what:= fnd, Replacement:= rplc, _" + Environment.NewLine + "LookAt:= xlPart, SearchOrder:= xlByRows, MatchCase:= False, _" + Environment.NewLine + "SearchFormat:= False, ReplaceFormat:= False" + Environment.NewLine);
+            }
+            infoList.Add(lastLine);
+            return infoList;
+        }
+
+        private IEnumerable<string> GenerateCalcMacro()
+        {
+            string firstLine = "REM  *****  BASIC  *****" + Environment.NewLine + "Sub FindReplaceAll()" + Environment.NewLine + "'PURPOSE: Find & Replace text/values" + Environment.NewLine + "'SOURCE: https://ask.libreoffice.org/t/find-and-replace-macro/27562 JohnSUN" + Environment.NewLine + "Dim oDoc as object" + Environment.NewLine + "Dim oDesc as object" + Environment.NewLine + "oDoc=ThisComponent.CurrentController.getActiveSheet()" + Environment.NewLine + "oDesc= oDoc.createReplaceDescriptor()" + Environment.NewLine + "oDesc.SearchCaseSensitive=false 'case insensitive" + Environment.NewLine + "oDesc.SearchRegularExpression=false 'no regexp" + Environment.NewLine + Environment.NewLine;
+            string lastLine = Environment.NewLine + "End Sub";
+            List<string> infoList = new List<string>();
+            string empty = string.Empty;
+            infoList.Add(firstLine);
+            foreach (POInfo currentPOInfo in PoInformation)
+            {
+                infoList.Add("fnd = \"" + currentPOInfo.OldPO + "\"" + Environment.NewLine + "rplc = \"" + currentPOInfo.NewPO + "\"" + Environment.NewLine + "oDesc.SearchString=fnd" + Environment.NewLine + "oDesc.ReplaceString=rplc" + Environment.NewLine + "oDoc.replaceAll(oDesc)" + Environment.NewLine);
+            }
+            infoList.Add(lastLine);
+            return infoList;
         }
     }
 }

@@ -1,42 +1,99 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using System.IO;
-using DynamicData;
-using ReplaceAllMacroGenerator.Helpers;
+using ReplaceAllMacroGenerator.Models;
+using CsvHelper;
+using Avalonia.Platform.Storage;
+using Avalonia.Controls;
+using System.Globalization;
 
 namespace ReplaceAllMacroGenerator.Services
 {
-    public class FileAccessService : IFileAccessProvider
+    public static class FileAccessService
     {
-        public IEnumerable<POInfo> LoadCSV(string fileName)
+        public static async Task<IStorageFile?> ChooseCSVFileAsync(Window _currentWindow)
         {
-            List<string> columns = new List<string>();
-            using (CsvFileReader theReader = new CsvFileReader(File.OpenRead(fileName)))
+            FilePickerFileType fileTypes = new FilePickerFileType("CSV Files (.csv)")
             {
-                while (theReader.ReadRow(columns))
-                {
-                    yield return new POInfo() { OldPO = columns[0], NewPO = columns[1] };
-                }
-            }
+                Patterns = new[] { "*.csv" },
+                AppleUniformTypeIdentifiers = new[] { "public.csv" },
+                MimeTypes = new[] { "csv/*" }
+            };
+
+            FilePickerOpenOptions options = new FilePickerOpenOptions()
+            {
+                Title = "Choose csv file.",
+                AllowMultiple = false,
+                FileTypeFilter = new FilePickerFileType[] { fileTypes }
+            };
+
+            IReadOnlyList<IStorageFile>? files = await _currentWindow?.StorageProvider.OpenFilePickerAsync(options);
+
+            return files.Count >= 1 ? files[0] : null;
         }
-        public async Task<IEnumerable<POInfo>> LoadCSVAsync(string fileName)
+
+        public static async Task<IStorageFile?> ChooseBASFileAsync(Window _currentWindow)
         {
-            List<string> columns = new List<string>();
-            List<POInfo> poInformation = new List<POInfo>();
-            using (CsvFileReader theReader = new CsvFileReader(File.OpenRead(fileName)))
+            FilePickerFileType fileType = new FilePickerFileType("BAS Files (.bas)")
             {
-                while (await theReader.ReadRowAsync(columns))
+                Patterns = new[] { "*.bas" },
+                AppleUniformTypeIdentifiers = new[] { "public.bas" },
+                MimeTypes = new[] { "bas/*" }
+            };
+
+            FilePickerSaveOptions options = new FilePickerSaveOptions()
+            {
+                Title = "Create a new bas file.",
+                DefaultExtension = ".bas",
+                ShowOverwritePrompt = true,
+                FileTypeChoices = new List<FilePickerFileType>() { fileType }
+            };
+
+            IStorageFile? file = await _currentWindow?.StorageProvider.SaveFilePickerAsync(options);
+
+            return file;
+        }
+
+        public static List<POInfo> LoadCSV(string fileName)
+        {
+            List<POInfo> poInformation = new List<POInfo>();
+            using StreamReader thesReader = new StreamReader(fileName);
+            using CsvReader thecReader = new CsvReader(thesReader, CultureInfo.InvariantCulture);
+
+            IEnumerable<POInfo> loadedPOInfo = thecReader.GetRecords<POInfo>();
+            foreach (POInfo currentPOInfo in loadedPOInfo)
+            {
+                poInformation.Add(new POInfo()
                 {
-                    poInformation.Add(new POInfo() { OldPO = columns[0], NewPO = columns[1] });
-                }
+                    OldPO = currentPOInfo.OldPO,
+                    NewPO = currentPOInfo.NewPO
+                });
+            }
+
+            return poInformation;
+
+        }
+        public static async Task<List<POInfo>> LoadCSVAsync(string fileName)
+        {
+            List<POInfo> poInformation = new List<POInfo>();
+            using StreamReader thesReader = new StreamReader(fileName);
+            using CsvReader thecReader = new CsvReader(thesReader, CultureInfo.InvariantCulture);
+
+            IAsyncEnumerable<POInfo> loadedPOInfo = thecReader.GetRecordsAsync<POInfo>();
+            await foreach (POInfo currentPOInfo in loadedPOInfo)
+            {
+                poInformation.Add(new POInfo()
+                {
+                    OldPO = currentPOInfo.OldPO,
+                    NewPO = currentPOInfo.NewPO
+                });
             }
 
             return poInformation;
         }
 
-        public bool SaveMacroFile(IEnumerable<string> information, string fileName)
+        public static bool SaveMacroFile(IEnumerable<string> information, string fileName)
         {
             try
             {
@@ -55,7 +112,7 @@ namespace ReplaceAllMacroGenerator.Services
             }
         }
 
-        public async Task<bool> SaveMacroFileAsync(IEnumerable<string> information, string fileName)
+        public static async Task<bool> SaveMacroFileAsync(IEnumerable<string> information, string fileName)
         {
             try
             {
