@@ -106,7 +106,7 @@ namespace ReplaceAllMacroGenerator.Services
                     return true;
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 return false;
             }
@@ -125,7 +125,7 @@ namespace ReplaceAllMacroGenerator.Services
                     return true;
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 return false;
             }

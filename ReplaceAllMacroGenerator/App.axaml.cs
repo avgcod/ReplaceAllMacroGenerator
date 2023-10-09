@@ -3,6 +3,7 @@ using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using ReplaceAllMacroGenerator.ViewModels;
 using ReplaceAllMacroGenerator.Views;
+using CommunityToolkit.Mvvm.Messaging;
 
 namespace ReplaceAllMacroGenerator
 {
@@ -18,7 +19,7 @@ namespace ReplaceAllMacroGenerator
             if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
             {
                 desktop.MainWindow = new MainWindow();
-                desktop.MainWindow.DataContext = new MainWindowViewModel(desktop.MainWindow);
+                desktop.MainWindow.DataContext = new MainWindowViewModel(desktop.MainWindow, StrongReferenceMessenger.Default);
             }
 
             base.OnFrameworkInitializationCompleted();

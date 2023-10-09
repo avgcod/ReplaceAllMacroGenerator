@@ -10,12 +10,15 @@ using System.Collections.ObjectModel;
 using ReplaceAllMacroGenerator.Views;
 using System;
 using System.Linq;
+using CommunityToolkit.Mvvm.Messaging;
+using CommunityToolkit.Mvvm.Collections;
 
 namespace ReplaceAllMacroGenerator.ViewModels
 {
-    public partial class MainWindowViewModel : ViewModelBase
+    public partial class MainWindowViewModel : ViewModelBase, IRecipient<POMessage>
     {
         private readonly Window _parentWindow;
+        private readonly IMessenger _messenger; 
 
         [ObservableProperty]
         private bool _isCalcMacro = true;
@@ -40,10 +43,21 @@ namespace ReplaceAllMacroGenerator.ViewModels
         public bool CanGenerate => PoInformation.Any()
                 && !IsGenerating && !IsAdding;              
 
-        public MainWindowViewModel(Window parentWindow)
+        public MainWindowViewModel(Window parentWindow, IMessenger messenger)
         {
             _parentWindow = parentWindow;
+
+            _messenger = messenger;
+            _messenger.Register<POMessage>(this);
+
+            _parentWindow.Closing += WindowClosing;
         }
+
+        private void WindowClosing(object? sender, WindowClosingEventArgs e)
+        {
+            _messenger.Unregister<POMessage>(this);
+            _parentWindow.Closing -= WindowClosing;
+;        }
 
         #region Commands
         [RelayCommand]
@@ -84,17 +98,8 @@ namespace ReplaceAllMacroGenerator.ViewModels
             IsAdding = true;
 
             AddPOView addView = new AddPOView();
-            addView.DataContext = new AddPOViewModel(addView);
+            addView.DataContext = new AddPOViewModel(addView, _messenger);
             await addView.ShowDialog(_parentWindow);
-
-            if (((AddPOViewModel)addView.DataContext).OKResult)
-            {
-                AddInformation(new POInfo()
-                {
-                    OldPO = ((AddPOViewModel)addView.DataContext).OldPO,
-                    NewPO = ((AddPOViewModel)addView.DataContext).NewPO
-                });
-            }
 
             IsAdding = false;
         }
@@ -150,7 +155,6 @@ namespace ReplaceAllMacroGenerator.ViewModels
             string firstLine = "Sub FindReplaceAll()" + Environment.NewLine + "'PURPOSE: Find & Replace text/values throughout a specific sheet" + Environment.NewLine + "'SOURCE: www.TheSpreadsheetGuru.com" + Environment.NewLine + Environment.NewLine + "Dim sht As Worksheet" + Environment.NewLine + "Dim fnd As Variant" + Environment.NewLine + "Dim rplc As Variant" + Environment.NewLine + Environment.NewLine + "'Store a specfic sheet to a variable" + Environment.NewLine + "Set sht = Sheets(\"Sheet1\")";
             string lastLine = Environment.NewLine + "End Sub";
             List<string> infoList = new List<string>();
-            string empty = string.Empty;
             infoList.Add(firstLine);
             foreach (POInfo currentPOInfo in PoInformation)
             {
@@ -165,7 +169,6 @@ namespace ReplaceAllMacroGenerator.ViewModels
             string firstLine = "REM  *****  BASIC  *****" + Environment.NewLine + "Sub FindReplaceAll()" + Environment.NewLine + "'PURPOSE: Find & Replace text/values" + Environment.NewLine + "'SOURCE: https://ask.libreoffice.org/t/find-and-replace-macro/27562 JohnSUN" + Environment.NewLine + "Dim oDoc as object" + Environment.NewLine + "Dim oDesc as object" + Environment.NewLine + "oDoc=ThisComponent.CurrentController.getActiveSheet()" + Environment.NewLine + "oDesc= oDoc.createReplaceDescriptor()" + Environment.NewLine + "oDesc.SearchCaseSensitive=false 'case insensitive" + Environment.NewLine + "oDesc.SearchRegularExpression=false 'no regexp" + Environment.NewLine + Environment.NewLine;
             string lastLine = Environment.NewLine + "End Sub";
             List<string> infoList = new List<string>();
-            string empty = string.Empty;
             infoList.Add(firstLine);
             foreach (POInfo currentPOInfo in PoInformation)
             {
@@ -173,6 +176,11 @@ namespace ReplaceAllMacroGenerator.ViewModels
             }
             infoList.Add(lastLine);
             return infoList;
+        }
+
+        public void Receive(POMessage message)
+        {
+            AddInformation(message.theInfo);
         }
     }
 }
