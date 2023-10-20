@@ -186,7 +186,6 @@ namespace ReplaceAllMacroGenerator.ViewModels
             }
         }
 
-        
         #endregion
 
         /// <summary>
