@@ -5,7 +5,6 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using System.Threading.Tasks;
 using ReplaceAllMacroGenerator.Services;
-using Avalonia.Platform.Storage;
 using System.Collections.ObjectModel;
 using ReplaceAllMacroGenerator.Views;
 using System;
@@ -56,7 +55,7 @@ namespace ReplaceAllMacroGenerator.ViewModels
         /// </summary>
         [ObservableProperty]
         [NotifyCanExecuteChangedFor(nameof(GenerateCommand))]
-        public ObservableCollection<POInfo> _poInformation = new ObservableCollection<POInfo>(); 
+        public ObservableCollection<POInfo> _poInformation = new ObservableCollection<POInfo>();
         #endregion
 
         public MainWindowViewModel(Window parentWindow, IMessenger messenger, string openExtension, string saveExtension)
@@ -126,15 +125,7 @@ namespace ReplaceAllMacroGenerator.ViewModels
         {
             Busy = true;
 
-            IStorageFile? selectedFile = await FileAccessService.ChooseOpenFileAsync(_parentWindow, _openExtension);
-            if (selectedFile != null)
-            {
-                string? fileName = await selectedFile?.SaveBookmarkAsync();
-                if (!string.IsNullOrEmpty(fileName))
-                {
-                    AddInformation(await FileAccessService.LoadCSVAsync(fileName));
-                }
-            }
+            await LoadPOInformation();
 
             Busy = false;
         }
@@ -195,28 +186,21 @@ namespace ReplaceAllMacroGenerator.ViewModels
             }
         }
 
-        /// <summary>
-        /// Shows a message box.
-        /// </summary>
-        /// <param name="message">The message to show.</param>
-        /// <returns>Task</returns>
-        private async Task ShowMessageBox(string message)
-        {
-            MessageBoxView mboxView = new MessageBoxView();
-            mboxView.DataContext = new MessageBoxViewModel(mboxView, message);
-            await mboxView.ShowDialog(_parentWindow);
-        }
+        
         #endregion
 
         /// <summary>
-        /// Sets PoInformation to a provided collection of POInfo.
+        /// Loads PoInformation from a file.
         /// </summary>
-        /// <param name="theInformation">Collection of POInfo to use.</param>
-        public void AddInformation(IEnumerable<POInfo> theInformation)
+        public async Task LoadPOInformation()
         {
-            PoInformation = new ObservableCollection<POInfo>(theInformation);
+            string selectedFile = await FileAccessService.ChooseOpenFileAsync(_parentWindow, _openExtension, _messenger);
+            if (!string.IsNullOrEmpty(selectedFile))
+            {
+                PoInformation = new ObservableCollection<POInfo>(await FileAccessService.LoadCSVAsync(selectedFile, _messenger));
+            }
         }
-        
+
         /// <summary>
         /// Generates a find replace all microsoft Excel macro.
         /// </summary>
@@ -300,8 +284,20 @@ namespace ReplaceAllMacroGenerator.ViewModels
         public async void Receive(OperationErrorMessage message)
         {
             await HandleOperationErrorMessage(message);
-        } 
+        }
         #endregion
+
+        /// <summary>
+        /// Shows a message box.
+        /// </summary>
+        /// <param name="message">The message to show.</param>
+        /// <returns>Task</returns>
+        private async Task ShowMessageBox(string message)
+        {
+            MessageBoxView mboxView = new MessageBoxView();
+            mboxView.DataContext = new MessageBoxViewModel(mboxView, message);
+            await mboxView.ShowDialog(_parentWindow);
+        }
 
     }
 }
