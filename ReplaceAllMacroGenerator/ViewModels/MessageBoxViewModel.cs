@@ -18,6 +18,9 @@ namespace ReplaceAllMacroGenerator.ViewModels
             _currentWindow = currentWindow;
         }
 
+        /// <summary>
+        /// Command to handle the OK button being pressed.
+        /// </summary>
         [RelayCommand]
         public void OK()
         {

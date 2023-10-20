@@ -4,10 +4,11 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d" d:DesignWidth="180" d:DesignHeight="70"
         Width="180" Height="70"
-        MinWidth="100" MinHeight="70"
+        MinWidth="180" MinHeight="70"
         x:Class="ReplaceAllMacroGenerator.Views.MessageBoxView"
         Title="Notice"
-        SystemDecorations="BorderOnly">
+        SystemDecorations="BorderOnly"
+        WindowStartupLocation="CenterOwner">
 
   <StackPanel Orientation="Vertical"
               Spacing="10"

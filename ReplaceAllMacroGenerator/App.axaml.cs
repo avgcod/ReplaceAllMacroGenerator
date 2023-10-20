@@ -19,7 +19,7 @@ namespace ReplaceAllMacroGenerator
             if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
             {
                 desktop.MainWindow = new MainWindow();
-                desktop.MainWindow.DataContext = new MainWindowViewModel(desktop.MainWindow, StrongReferenceMessenger.Default);
+                desktop.MainWindow.DataContext = new MainWindowViewModel(desktop.MainWindow, StrongReferenceMessenger.Default, ".csv",".bas");
             }
 
             base.OnFrameworkInitializationCompleted();

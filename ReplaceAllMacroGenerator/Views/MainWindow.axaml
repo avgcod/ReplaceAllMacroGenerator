@@ -1,6 +1,7 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="using:ReplaceAllMacroGenerator.ViewModels"
+        xmlns:models="using:ReplaceAllMacroGenerator.Models"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d" Width="350" Height="375"
@@ -18,7 +19,7 @@
                   VerticalScrollBarVisibility="Auto">
       <ItemsRepeater ItemsSource="{Binding PoInformation}">
         <ItemsRepeater.ItemTemplate>
-          <DataTemplate>
+          <DataTemplate DataType="models:POInfo">
             <Grid ColumnDefinitions="auto,auto" >
               <TextBlock Grid.Column="0" Text="{Binding OldPO}" Margin="2"/>
               <TextBlock Grid.Column="1" Text="{Binding NewPO}" Margin="2"/>

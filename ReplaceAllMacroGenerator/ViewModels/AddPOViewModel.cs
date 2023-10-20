@@ -18,17 +18,21 @@ namespace ReplaceAllMacroGenerator.ViewModels
         [ObservableProperty]
         [NotifyCanExecuteChangedFor(nameof(OKCommand))]
         private string _newPO = string.Empty;
-
-
-        public bool CanAdd => !string.IsNullOrEmpty(OldPO) && !string.IsNullOrEmpty(NewPO);
-
+             
         public AddPOViewModel(Window currentWindow, IMessenger messenger)
         {
             _currentWindow = currentWindow;
             _messenger = messenger;
-
         }
 
+        /// <summary>
+        /// CanExecute for the Add Command.
+        /// </summary>
+        public bool CanAdd => !string.IsNullOrEmpty(OldPO) && !string.IsNullOrEmpty(NewPO);
+
+        /// <summary>
+        /// Command to handle the OK button being pressed.
+        /// </summary>
         [RelayCommand(CanExecute =nameof(CanAdd))]
         public void OK()
         {
@@ -41,10 +45,12 @@ namespace ReplaceAllMacroGenerator.ViewModels
             _currentWindow.Close();
         }
 
+        /// <summary>
+        /// Command to handle the Cancel button being pressed.
+        /// </summary>
         [RelayCommand]
         public void Cancel()
         {
-            NewPO = string.Empty;
             _currentWindow.Close();
         }
 

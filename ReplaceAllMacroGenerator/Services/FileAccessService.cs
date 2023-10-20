@@ -7,93 +7,171 @@ using CsvHelper;
 using Avalonia.Platform.Storage;
 using Avalonia.Controls;
 using System.Globalization;
+using CommunityToolkit.Mvvm.Messaging;
 
 namespace ReplaceAllMacroGenerator.Services
 {
+    /// <summary>
+    /// Provides IO operation methods.
+    /// </summary>
     public static class FileAccessService
     {
-        public static async Task<IStorageFile?> ChooseCSVFileAsync(Window _currentWindow)
+        /// <summary>
+        /// Opens a file chooser dialog and returns the chosen file.
+        /// </summary>
+        /// <param name="currentWindow">Parent window for the dialog.</param>
+        /// <param name="fileExtension">File extension to filter by.</param>
+        /// <returns>The chosen file or an empty string if none selected or there is an error.</returns>
+        public static async Task<string> ChooseOpenFileAsync(Window currentWindow, string fileExtension, IMessenger theMessenger)
         {
             FilePickerFileType fileTypes = new FilePickerFileType("CSV Files (.csv)")
             {
-                Patterns = new[] { "*.csv" },
-                AppleUniformTypeIdentifiers = new[] { "public.csv" },
-                MimeTypes = new[] { "csv/*" }
+                Patterns = new[] { $"*.{fileExtension}" },
+                AppleUniformTypeIdentifiers = new[] { $"public.{fileExtension}" },
+                MimeTypes = new[] { $"{fileExtension}/*" }
             };
 
             FilePickerOpenOptions options = new FilePickerOpenOptions()
             {
-                Title = "Choose csv file.",
+                Title = $"Choose {fileExtension} file.",
                 AllowMultiple = false,
                 FileTypeFilter = new FilePickerFileType[] { fileTypes }
             };
 
-            IReadOnlyList<IStorageFile>? files = await _currentWindow?.StorageProvider.OpenFilePickerAsync(options);
-
-            return files.Count >= 1 ? files[0] : null;
+            try
+            {
+                IReadOnlyList<IStorageFile>? files = await currentWindow?.StorageProvider.OpenFilePickerAsync(options);
+                if (files != null && files[0].CanBookmark)
+                {
+                    return await files[0].SaveBookmarkAsync() ?? string.Empty;
+                }
+                else
+                {
+                    return string.Empty;
+                }
+            }
+            catch (Exception ex)
+            {
+                theMessenger.Send<OperationErrorMessage>(new OperationErrorMessage(ex.GetType().Name, ex.Message));
+                return string.Empty;
+            }
         }
 
-        public static async Task<IStorageFile?> ChooseBASFileAsync(Window _currentWindow)
+        /// <summary>
+        /// Opens a save file dialog and returns the chosen file.
+        /// </summary>
+        /// <param name="_currentWindow">Parent window for the dialog.</param>
+        /// <param name="fileExtension">File extension to filter by.</param>
+        /// <returns>The chosen file or an empty string if none selected or there is an error.</returns>
+        public static async Task<string> ChooseSaveFileAsync(Window _currentWindow, string fileExtension, IMessenger theMessenger)
         {
             FilePickerFileType fileType = new FilePickerFileType("BAS Files (.bas)")
             {
-                Patterns = new[] { "*.bas" },
-                AppleUniformTypeIdentifiers = new[] { "public.bas" },
-                MimeTypes = new[] { "bas/*" }
+                Patterns = new[] { $"*.{fileExtension}" },
+                AppleUniformTypeIdentifiers = new[] { $"public.{fileExtension}" },
+                MimeTypes = new[] { $"{fileExtension}/*" }
             };
 
             FilePickerSaveOptions options = new FilePickerSaveOptions()
             {
-                Title = "Create a new bas file.",
-                DefaultExtension = ".bas",
+                Title = $"Create a new {fileExtension} file.",
+                DefaultExtension = $".{fileExtension}",
                 ShowOverwritePrompt = true,
                 FileTypeChoices = new List<FilePickerFileType>() { fileType }
             };
 
-            IStorageFile? file = await _currentWindow?.StorageProvider.SaveFilePickerAsync(options);
-
-            return file;
-        }
-
-        public static List<POInfo> LoadCSV(string fileName)
-        {
-            List<POInfo> poInformation = new List<POInfo>();
-            using StreamReader thesReader = new StreamReader(fileName);
-            using CsvReader thecReader = new CsvReader(thesReader, CultureInfo.InvariantCulture);
-
-            IEnumerable<POInfo> loadedPOInfo = thecReader.GetRecords<POInfo>();
-            foreach (POInfo currentPOInfo in loadedPOInfo)
+            try
             {
-                poInformation.Add(new POInfo()
+                IStorageFile? file = await _currentWindow?.StorageProvider.SaveFilePickerAsync(options);
+                if (file != null && file.CanBookmark)
                 {
-                    OldPO = currentPOInfo.OldPO,
-                    NewPO = currentPOInfo.NewPO
-                });
+                    return await file.SaveBookmarkAsync() ?? string.Empty;
+                }
+                else
+                {
+                    return string.Empty;
+                }
             }
-
-            return poInformation;
-
-        }
-        public static async Task<List<POInfo>> LoadCSVAsync(string fileName)
-        {
-            List<POInfo> poInformation = new List<POInfo>();
-            using StreamReader thesReader = new StreamReader(fileName);
-            using CsvReader thecReader = new CsvReader(thesReader, CultureInfo.InvariantCulture);
-
-            IAsyncEnumerable<POInfo> loadedPOInfo = thecReader.GetRecordsAsync<POInfo>();
-            await foreach (POInfo currentPOInfo in loadedPOInfo)
+            catch (Exception ex)
             {
-                poInformation.Add(new POInfo()
-                {
-                    OldPO = currentPOInfo.OldPO,
-                    NewPO = currentPOInfo.NewPO
-                });
+                theMessenger.Send<OperationErrorMessage>(new OperationErrorMessage(ex.GetType().Name, ex.Message));
+                return string.Empty;
             }
-
-            return poInformation;
         }
 
-        public static bool SaveMacroFile(IEnumerable<string> information, string fileName)
+        /// <summary>
+        /// Builds a collection of POInfo from a CSV file.
+        /// </summary>
+        /// <param name="fileName">CSV file to use.</param>
+        /// <returns>Collection of POInfo or an empty collection if there is an error.</returns>
+        public static IEnumerable<POInfo> LoadCSV(string fileName, IMessenger theMessenger)
+        {
+            try
+            {
+                List<POInfo> poInformation = new List<POInfo>();
+                using StreamReader thesReader = new StreamReader(fileName);
+                using CsvReader thecReader = new CsvReader(thesReader, CultureInfo.InvariantCulture);
+
+                IEnumerable<POInfo> loadedPOInfo = thecReader.GetRecords<POInfo>();
+                foreach (POInfo currentPOInfo in loadedPOInfo)
+                {
+                    poInformation.Add(new POInfo()
+                    {
+                        OldPO = currentPOInfo.OldPO,
+                        NewPO = currentPOInfo.NewPO
+                    });
+                }
+
+                thesReader.Close();
+                return poInformation;
+            }
+            catch (Exception ex)
+            {
+                theMessenger.Send<OperationErrorMessage>(new OperationErrorMessage(ex.GetType().Name, ex.Message));
+                return new List<POInfo>();
+            }            
+
+        }
+
+        /// <summary>
+        /// Builds a collection of POInfo from a CSV file.
+        /// </summary>
+        /// <param name="fileName">CSV file to use.</param>
+        /// <returns>Collection of POInfo or an empty collection if there is an error.</returns>
+        public static async Task<IEnumerable<POInfo>> LoadCSVAsync(string fileName, IMessenger theMessenger)
+        {
+            try
+            {
+                List<POInfo> poInformation = new List<POInfo>();
+                using StreamReader thesReader = new StreamReader(fileName);
+                using CsvReader thecReader = new CsvReader(thesReader, CultureInfo.InvariantCulture);
+
+                IAsyncEnumerable<POInfo> loadedPOInfo = thecReader.GetRecordsAsync<POInfo>();
+                await foreach (POInfo currentPOInfo in loadedPOInfo)
+                {
+                    poInformation.Add(new POInfo()
+                    {
+                        OldPO = currentPOInfo.OldPO,
+                        NewPO = currentPOInfo.NewPO
+                    });
+                }
+
+                thesReader.Close();
+                return poInformation;
+            }
+            catch (Exception ex)
+            {
+                theMessenger.Send<OperationErrorMessage>(new OperationErrorMessage(ex.GetType().Name, ex.Message));
+                return new List<POInfo>();
+            }            
+        }
+
+        /// <summary>
+        /// Saves a macro file.
+        /// </summary>
+        /// <param name="information">Collection of strings representing the macro.</param>
+        /// <param name="fileName">Macro file name.</param>
+        public static void SaveMacroFile(IEnumerable<string> information, string fileName, IMessenger theMessenger)
         {
             try
             {
@@ -103,16 +181,20 @@ namespace ReplaceAllMacroGenerator.Services
                     {
                         streamWriter.WriteLine(item);
                     }
-                    return true;
                 }
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                return false;
+                theMessenger.Send<OperationErrorMessage>(new OperationErrorMessage(ex.GetType().Name, ex.Message));
             }
         }
 
-        public static async Task<bool> SaveMacroFileAsync(IEnumerable<string> information, string fileName)
+        /// <summary>
+        /// Saves a macro file.
+        /// </summary>
+        /// <param name="information">Collection of strings representing the macro.</param>
+        /// <param name="fileName">Macro file name.</param>
+        public static async Task SaveMacroFileAsync(IEnumerable<string> information, string fileName, IMessenger theMessenger)
         {
             try
             {
@@ -122,12 +204,11 @@ namespace ReplaceAllMacroGenerator.Services
                     {
                         await streamWriter.WriteLineAsync(item);
                     }
-                    return true;
                 }
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                return false;
+                theMessenger.Send<OperationErrorMessage>(new OperationErrorMessage(ex.GetType().Name, ex.Message));
             }
         }
     }
