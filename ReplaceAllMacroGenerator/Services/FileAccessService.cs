@@ -110,8 +110,8 @@ namespace ReplaceAllMacroGenerator.Services
             try
             {
                 List<POInfo> poInformation = new List<POInfo>();
-                using StreamReader thesReader = new StreamReader(fileName);
-                using CsvReader thecReader = new CsvReader(thesReader, CultureInfo.InvariantCulture);
+                using TextReader theReader = File.OpenText(fileName);
+                using CsvReader thecReader = new CsvReader(theReader, CultureInfo.InvariantCulture);
 
                 IEnumerable<POInfo> loadedPOInfo = thecReader.GetRecords<POInfo>();
                 foreach (POInfo currentPOInfo in loadedPOInfo)
@@ -123,7 +123,7 @@ namespace ReplaceAllMacroGenerator.Services
                     });
                 }
 
-                thesReader.Close();
+                theReader.Close();
                 return poInformation;
             }
             catch (Exception ex)
@@ -144,8 +144,8 @@ namespace ReplaceAllMacroGenerator.Services
             try
             {
                 List<POInfo> poInformation = new List<POInfo>();
-                using StreamReader thesReader = new StreamReader(fileName);
-                using CsvReader thecReader = new CsvReader(thesReader, CultureInfo.InvariantCulture);
+                using TextReader theReader = File.OpenText(fileName);
+                using CsvReader thecReader = new CsvReader(theReader, CultureInfo.InvariantCulture);
 
                 IAsyncEnumerable<POInfo> loadedPOInfo = thecReader.GetRecordsAsync<POInfo>();
                 await foreach (POInfo currentPOInfo in loadedPOInfo)
@@ -157,7 +157,7 @@ namespace ReplaceAllMacroGenerator.Services
                     });
                 }
 
-                thesReader.Close();
+                theReader.Close();
                 return poInformation;
             }
             catch (Exception ex)

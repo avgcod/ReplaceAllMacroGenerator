@@ -7,11 +7,14 @@
         x:Class="ReplaceAllMacroGenerator.Views.ErrorMessageBoxView"
         x:DataType="vm:ErrorMessageBoxViewModel"
         Title="Error Occurred"
-        SizeToContent="WidthAndHeight"
+        MinHeight="250"
+        MinWidth="325"
+        Height="250"
+        Width="325"
         SystemDecorations="BorderOnly"
         WindowStartupLocation="CenterOwner">
 
-  <Grid RowDefinitions="auto,auto,auto,auto,auto,auto" ColumnDefinitions="auto"
+  <Grid RowDefinitions="auto,auto,auto,auto,*,auto" ColumnDefinitions="auto"
         Margin="5"
         HorizontalAlignment="Center">
 
