@@ -8,6 +8,7 @@ using Avalonia.Platform.Storage;
 using Avalonia.Controls;
 using System.Globalization;
 using CommunityToolkit.Mvvm.Messaging;
+using System.Linq;
 
 namespace ReplaceAllMacroGenerator.Services
 {
@@ -24,10 +25,10 @@ namespace ReplaceAllMacroGenerator.Services
         /// <returns>The chosen file or an empty string if none selected or there is an error.</returns>
         public static async Task<string> ChooseOpenFileAsync(Window currentWindow, string fileExtension, IMessenger theMessenger)
         {
-            FilePickerFileType fileTypes = new FilePickerFileType("CSV Files (.csv)")
+            FilePickerFileType fileTypes = new FilePickerFileType($"{fileExtension.ToUpper()} Files ({fileExtension})")
             {
-                Patterns = new[] { $"*.{fileExtension}" },
-                AppleUniformTypeIdentifiers = new[] { $"public.{fileExtension}" },
+                Patterns = new[] { $"*{fileExtension}" },
+                AppleUniformTypeIdentifiers = new[] { $"public{fileExtension}" },
                 MimeTypes = new[] { $"{fileExtension}/*" }
             };
 
@@ -41,7 +42,7 @@ namespace ReplaceAllMacroGenerator.Services
             try
             {
                 IReadOnlyList<IStorageFile>? files = await currentWindow?.StorageProvider.OpenFilePickerAsync(options);
-                if (files != null && files[0].CanBookmark)
+                if (files != null && files.Any() && files[0].CanBookmark)
                 {
                     return await files[0].SaveBookmarkAsync() ?? string.Empty;
                 }
@@ -65,10 +66,10 @@ namespace ReplaceAllMacroGenerator.Services
         /// <returns>The chosen file or an empty string if none selected or there is an error.</returns>
         public static async Task<string> ChooseSaveFileAsync(Window _currentWindow, string fileExtension, IMessenger theMessenger)
         {
-            FilePickerFileType fileType = new FilePickerFileType("BAS Files (.bas)")
+            FilePickerFileType fileType = new FilePickerFileType($"{fileExtension.ToUpper()} Files ({fileExtension})")
             {
-                Patterns = new[] { $"*.{fileExtension}" },
-                AppleUniformTypeIdentifiers = new[] { $"public.{fileExtension}" },
+                Patterns = new[] { $"*{fileExtension}" },
+                AppleUniformTypeIdentifiers = new[] { $"public{fileExtension}" },
                 MimeTypes = new[] { $"{fileExtension}/*" }
             };
 
