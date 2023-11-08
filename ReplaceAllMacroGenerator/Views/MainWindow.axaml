@@ -20,10 +20,10 @@
                   VerticalScrollBarVisibility="Auto">
       <ItemsRepeater ItemsSource="{Binding PoInformation}">
         <ItemsRepeater.ItemTemplate>
-          <DataTemplate DataType="models:POInfo">
+          <DataTemplate DataType="models:ReplacementInfo">
             <Grid ColumnDefinitions="auto,auto" >
-              <TextBlock Grid.Column="0" Text="{Binding OldPO}" Margin="2"/>
-              <TextBlock Grid.Column="1" Text="{Binding NewPO}" Margin="2"/>
+              <TextBlock Grid.Column="0" Text="{Binding OldInfo}" Margin="2"/>
+              <TextBlock Grid.Column="1" Text="{Binding NewInfo}" Margin="2"/>
             </Grid>
           </DataTemplate>
         </ItemsRepeater.ItemTemplate>

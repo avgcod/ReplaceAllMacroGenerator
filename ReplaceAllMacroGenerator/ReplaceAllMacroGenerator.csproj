@@ -32,4 +32,9 @@
   <ItemGroup>
     <Folder Include="Helpers\" />
   </ItemGroup>
+  <ItemGroup>
+    <Compile Update="Views\AddReplacementView.axaml.cs">
+      <DependentUpon>AddReplacementView.axaml</DependentUpon>
+    </Compile>
+  </ItemGroup>
 </Project>

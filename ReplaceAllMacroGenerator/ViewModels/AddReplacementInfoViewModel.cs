@@ -6,7 +6,7 @@ using ReplaceAllMacroGenerator.Models;
 
 namespace ReplaceAllMacroGenerator.ViewModels
 {
-    public partial class AddPOViewModel : ViewModelBase
+    public partial class AddReplacementInfoViewModel : ViewModelBase
     {
         private readonly Window _currentWindow;
         private readonly IMessenger _messenger;
@@ -19,7 +19,7 @@ namespace ReplaceAllMacroGenerator.ViewModels
         [NotifyCanExecuteChangedFor(nameof(OKCommand))]
         private string _newPO = string.Empty;
              
-        public AddPOViewModel(Window currentWindow, IMessenger messenger)
+        public AddReplacementInfoViewModel(Window currentWindow, IMessenger messenger)
         {
             _currentWindow = currentWindow;
             _messenger = messenger;
@@ -36,10 +36,10 @@ namespace ReplaceAllMacroGenerator.ViewModels
         [RelayCommand(CanExecute =nameof(CanAdd))]
         public void OK()
         {
-            POInfo theInfo = new POInfo()
+            ReplacementInfo theInfo = new ReplacementInfo()
             {
-                OldPO = OldPO,
-                NewPO = NewPO
+                OldInfo = OldPO,
+                NewInfo = NewPO
             };
             _messenger.Send<POMessage>(new POMessage(theInfo));
             _currentWindow.Close();

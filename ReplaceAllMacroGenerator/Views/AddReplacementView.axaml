@@ -6,8 +6,8 @@
         mc:Ignorable="d" d:DesignWidth="200" d:DesignHeight="125"
         MinWidth="150" MinHeight="125"
         Width="150" Height="125"
-        x:Class="ReplaceAllMacroGenerator.Views.AddPOView"
-        x:DataType="vm:AddPOViewModel"
+        x:Class="ReplaceAllMacroGenerator.Views.AddReplacementView"
+        x:DataType="vm:AddReplacementInfoViewModel"
         Title="Add PO">
 
   <Grid Margin="5">

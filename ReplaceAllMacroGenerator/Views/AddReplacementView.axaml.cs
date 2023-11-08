@@ -2,9 +2,9 @@ using Avalonia.Controls;
 
 namespace ReplaceAllMacroGenerator.Views
 {
-    public partial class AddPOView : Window
+    public partial class AddReplacementView : Window
     {
-        public AddPOView()
+        public AddReplacementView()
         {
             InitializeComponent();
         }

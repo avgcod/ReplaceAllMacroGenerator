@@ -105,31 +105,31 @@ namespace ReplaceAllMacroGenerator.Services
         /// </summary>
         /// <param name="fileName">CSV file to use.</param>
         /// <returns>Collection of POInfo or an empty collection if there is an error.</returns>
-        public static IEnumerable<POInfo> LoadCSV(string fileName, IMessenger theMessenger)
+        public static IEnumerable<ReplacementInfo> LoadCSV(string fileName, IMessenger theMessenger)
         {
             try
             {
-                List<POInfo> poInformation = new List<POInfo>();
+                List<ReplacementInfo> replacementInformation = new List<ReplacementInfo>();
                 using TextReader theReader = File.OpenText(fileName);
                 using CsvReader thecReader = new CsvReader(theReader, CultureInfo.InvariantCulture);
 
-                IEnumerable<POInfo> loadedPOInfo = thecReader.GetRecords<POInfo>();
-                foreach (POInfo currentPOInfo in loadedPOInfo)
+                IEnumerable<ReplacementInfo> loadedPOInfo = thecReader.GetRecords<ReplacementInfo>();
+                foreach (ReplacementInfo currentPOInfo in loadedPOInfo)
                 {
-                    poInformation.Add(new POInfo()
+                    replacementInformation.Add(new ReplacementInfo()
                     {
-                        OldPO = currentPOInfo.OldPO,
-                        NewPO = currentPOInfo.NewPO
+                        OldInfo = currentPOInfo.OldInfo,
+                        NewInfo = currentPOInfo.NewInfo
                     });
                 }
 
                 theReader.Close();
-                return poInformation;
+                return replacementInformation;
             }
             catch (Exception ex)
             {
                 theMessenger.Send<OperationErrorMessage>(new OperationErrorMessage(ex.GetType().Name, ex.Message));
-                return new List<POInfo>();
+                return new List<ReplacementInfo>();
             }            
 
         }
@@ -139,31 +139,31 @@ namespace ReplaceAllMacroGenerator.Services
         /// </summary>
         /// <param name="fileName">CSV file to use.</param>
         /// <returns>Collection of POInfo or an empty collection if there is an error.</returns>
-        public static async Task<IEnumerable<POInfo>> LoadCSVAsync(string fileName, IMessenger theMessenger)
+        public static async Task<IEnumerable<ReplacementInfo>> LoadCSVAsync(string fileName, IMessenger theMessenger)
         {
             try
             {
-                List<POInfo> poInformation = new List<POInfo>();
+                List<ReplacementInfo> replacementInformation = new List<ReplacementInfo>();
                 using TextReader theReader = File.OpenText(fileName);
                 using CsvReader thecReader = new CsvReader(theReader, CultureInfo.InvariantCulture);
 
-                IAsyncEnumerable<POInfo> loadedPOInfo = thecReader.GetRecordsAsync<POInfo>();
-                await foreach (POInfo currentPOInfo in loadedPOInfo)
+                IAsyncEnumerable<ReplacementInfo> loadedPOInfo = thecReader.GetRecordsAsync<ReplacementInfo>();
+                await foreach (ReplacementInfo currentPOInfo in loadedPOInfo)
                 {
-                    poInformation.Add(new POInfo()
+                    replacementInformation.Add(new ReplacementInfo()
                     {
-                        OldPO = currentPOInfo.OldPO,
-                        NewPO = currentPOInfo.NewPO
+                        OldInfo = currentPOInfo.OldInfo,
+                        NewInfo = currentPOInfo.NewInfo
                     });
                 }
 
                 theReader.Close();
-                return poInformation;
+                return replacementInformation;
             }
             catch (Exception ex)
             {
                 theMessenger.Send<OperationErrorMessage>(new OperationErrorMessage(ex.GetType().Name, ex.Message));
-                return new List<POInfo>();
+                return new List<ReplacementInfo>();
             }            
         }
 

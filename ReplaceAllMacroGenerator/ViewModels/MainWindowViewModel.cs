@@ -55,7 +55,7 @@ namespace ReplaceAllMacroGenerator.ViewModels
         /// </summary>
         [ObservableProperty]
         [NotifyCanExecuteChangedFor(nameof(GenerateCommand))]
-        public ObservableCollection<POInfo> _poInformation = new ObservableCollection<POInfo>();
+        public ObservableCollection<ReplacementInfo> _poInformation = new ObservableCollection<ReplacementInfo>();
         #endregion
 
         public MainWindowViewModel(Window parentWindow, IMessenger messenger, string openExtension, string saveExtension)
@@ -139,8 +139,8 @@ namespace ReplaceAllMacroGenerator.ViewModels
         {
             Busy = true;
 
-            AddPOView addView = new AddPOView();
-            addView.DataContext = new AddPOViewModel(addView, _messenger);
+            AddReplacementView addView = new AddReplacementView();
+            addView.DataContext = new AddReplacementInfoViewModel(addView, _messenger);
             await addView.ShowDialog(_parentWindow);
 
             Busy = false;
@@ -196,7 +196,7 @@ namespace ReplaceAllMacroGenerator.ViewModels
             string selectedFile = await FileAccessService.ChooseOpenFileAsync(_parentWindow, _openExtension, _messenger);
             if (!string.IsNullOrEmpty(selectedFile))
             {
-                PoInformation = new ObservableCollection<POInfo>(await FileAccessService.LoadCSVAsync(selectedFile, _messenger));
+                PoInformation = new ObservableCollection<ReplacementInfo>(await FileAccessService.LoadCSVAsync(selectedFile, _messenger));
             }
         }
 
@@ -212,9 +212,9 @@ namespace ReplaceAllMacroGenerator.ViewModels
             infoList.Add(firstLine);
             await Task.Run(() =>
             {
-                foreach (POInfo currentPOInfo in PoInformation)
+                foreach (ReplacementInfo currentPOInfo in PoInformation)
                 {
-                    infoList.Add("fnd = \"" + currentPOInfo.OldPO + "\"" + Environment.NewLine + "rplc = \"" + currentPOInfo.NewPO + "\"" + Environment.NewLine + "sht.Cells.Replace what:= fnd, Replacement:= rplc, _" + Environment.NewLine + "LookAt:= xlPart, SearchOrder:= xlByRows, MatchCase:= False, _" + Environment.NewLine + "SearchFormat:= False, ReplaceFormat:= False" + Environment.NewLine);
+                    infoList.Add("fnd = \"" + currentPOInfo.OldInfo + "\"" + Environment.NewLine + "rplc = \"" + currentPOInfo.NewInfo + "\"" + Environment.NewLine + "sht.Cells.Replace what:= fnd, Replacement:= rplc, _" + Environment.NewLine + "LookAt:= xlPart, SearchOrder:= xlByRows, MatchCase:= False, _" + Environment.NewLine + "SearchFormat:= False, ReplaceFormat:= False" + Environment.NewLine);
                 }
             });
 
@@ -234,9 +234,9 @@ namespace ReplaceAllMacroGenerator.ViewModels
             infoList.Add(firstLine);
             await Task.Run(() =>
             {
-                foreach (POInfo currentPOInfo in PoInformation)
+                foreach (ReplacementInfo currentPOInfo in PoInformation)
                 {
-                    infoList.Add("fnd = \"" + currentPOInfo.OldPO + "\"" + Environment.NewLine + "rplc = \"" + currentPOInfo.NewPO + "\"" + Environment.NewLine + "oDesc.SearchString=fnd" + Environment.NewLine + "oDesc.ReplaceString=rplc" + Environment.NewLine + "oDoc.replaceAll(oDesc)" + Environment.NewLine);
+                    infoList.Add("fnd = \"" + currentPOInfo.OldInfo + "\"" + Environment.NewLine + "rplc = \"" + currentPOInfo.NewInfo + "\"" + Environment.NewLine + "oDesc.SearchString=fnd" + Environment.NewLine + "oDesc.ReplaceString=rplc" + Environment.NewLine + "oDoc.replaceAll(oDesc)" + Environment.NewLine);
                 }
             });
 
