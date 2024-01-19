@@ -6,10 +6,9 @@ using ReplaceAllMacroGenerator.Models;
 
 namespace ReplaceAllMacroGenerator.ViewModels
 {
-    public partial class AddReplacementInfoViewModel : ViewModelBase
+    public partial class AddReplacementInfoViewModel(Window currentWindow, IMessenger messenger) : ViewModelBase(messenger)
     {
-        private readonly Window _currentWindow;
-        private readonly IMessenger _messenger;
+        private readonly Window _currentWindow = currentWindow;
 
         [ObservableProperty]
         [NotifyCanExecuteChangedFor(nameof(OKCommand))]
@@ -18,12 +17,6 @@ namespace ReplaceAllMacroGenerator.ViewModels
         [ObservableProperty]
         [NotifyCanExecuteChangedFor(nameof(OKCommand))]
         private string _newPO = string.Empty;
-             
-        public AddReplacementInfoViewModel(Window currentWindow, IMessenger messenger)
-        {
-            _currentWindow = currentWindow;
-            _messenger = messenger;
-        }
 
         /// <summary>
         /// CanExecute for the Add Command.
@@ -36,12 +29,12 @@ namespace ReplaceAllMacroGenerator.ViewModels
         [RelayCommand(CanExecute =nameof(CanAdd))]
         public void OK()
         {
-            ReplacementInfo theInfo = new ReplacementInfo()
+            ReplacementInfo theInfo = new()
             {
                 OldInfo = OldPO,
                 NewInfo = NewPO
             };
-            _messenger.Send<POMessage>(new POMessage(theInfo));
+            Messenger.Send<POMessage>(new POMessage(theInfo));
             _currentWindow.Close();
         }
 
@@ -53,6 +46,5 @@ namespace ReplaceAllMacroGenerator.ViewModels
         {
             _currentWindow.Close();
         }
-
     }
 }

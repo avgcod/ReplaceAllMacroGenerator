@@ -1,14 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using System.IO;
-using ReplaceAllMacroGenerator.Models;
-using CsvHelper;
+﻿using Avalonia.Controls;
 using Avalonia.Platform.Storage;
-using Avalonia.Controls;
-using System.Globalization;
 using CommunityToolkit.Mvvm.Messaging;
-using System.Linq;
+using CsvHelper;
+using ReplaceAllMacroGenerator.Models;
+using System;
+using System.Collections.Generic;
+using System.Globalization;
+using System.IO;
+using System.Threading.Tasks;
 
 namespace ReplaceAllMacroGenerator.Services
 {
@@ -25,36 +24,38 @@ namespace ReplaceAllMacroGenerator.Services
         /// <returns>The chosen file or an empty string if none selected or there is an error.</returns>
         public static async Task<string> ChooseOpenFileAsync(Window currentWindow, string fileExtension, IMessenger theMessenger)
         {
-            FilePickerFileType fileTypes = new FilePickerFileType($"{fileExtension.ToUpper()} Files ({fileExtension})")
+            FilePickerFileType fileTypes = new ($"{fileExtension.ToUpper()} Files ({fileExtension})")
             {
                 Patterns = new[] { $"*{fileExtension}" },
                 AppleUniformTypeIdentifiers = new[] { $"public{fileExtension}" },
                 MimeTypes = new[] { $"{fileExtension}/*" }
             };
 
-            FilePickerOpenOptions options = new FilePickerOpenOptions()
+            FilePickerOpenOptions options = new()
             {
                 Title = $"Choose {fileExtension} file.",
                 AllowMultiple = false,
                 FileTypeFilter = new FilePickerFileType[] { fileTypes }
             };
 
+            string fileName = string.Empty;
             try
             {
-                IReadOnlyList<IStorageFile>? files = await currentWindow?.StorageProvider.OpenFilePickerAsync(options);
-                if (files != null && files.Any() && files[0].CanBookmark)
+                if (currentWindow?.StorageProvider is { CanOpen: true } storageProvider)
                 {
-                    return await files[0].SaveBookmarkAsync() ?? string.Empty;
+                    IReadOnlyList<IStorageFile> files = await storageProvider.OpenFilePickerAsync(options);
+                    if (files.Count > 0 && files[0].CanBookmark)
+                    {
+                        fileName = await files[0].SaveBookmarkAsync() ?? string.Empty;
+                    }
                 }
-                else
-                {
-                    return string.Empty;
-                }
+
+                return fileName;
             }
             catch (Exception ex)
             {
                 theMessenger.Send<OperationErrorMessage>(new OperationErrorMessage(ex.GetType().Name, ex.Message));
-                return string.Empty;
+                return fileName;
             }
         }
 
@@ -66,14 +67,14 @@ namespace ReplaceAllMacroGenerator.Services
         /// <returns>The chosen file or an empty string if none selected or there is an error.</returns>
         public static async Task<string> ChooseSaveFileAsync(Window _currentWindow, string fileExtension, IMessenger theMessenger)
         {
-            FilePickerFileType fileType = new FilePickerFileType($"{fileExtension.ToUpper()} Files ({fileExtension})")
+            FilePickerFileType fileType = new ($"{fileExtension.ToUpper()} Files ({fileExtension})")
             {
                 Patterns = new[] { $"*{fileExtension}" },
                 AppleUniformTypeIdentifiers = new[] { $"public{fileExtension}" },
                 MimeTypes = new[] { $"{fileExtension}/*" }
             };
 
-            FilePickerSaveOptions options = new FilePickerSaveOptions()
+            FilePickerSaveOptions options = new()
             {
                 Title = $"Create a new {fileExtension} file.",
                 DefaultExtension = $".{fileExtension}",
@@ -81,57 +82,26 @@ namespace ReplaceAllMacroGenerator.Services
                 FileTypeChoices = new List<FilePickerFileType>() { fileType }
             };
 
+            string fileName = string.Empty;
+
             try
             {
-                IStorageFile? file = await _currentWindow?.StorageProvider.SaveFilePickerAsync(options);
-                if (file != null && file.CanBookmark)
+                if (_currentWindow?.StorageProvider is { CanOpen: true } storageProvider)
                 {
-                    return await file.SaveBookmarkAsync() ?? string.Empty;
-                }
-                else
-                {
-                    return string.Empty;
-                }
-            }
-            catch (Exception ex)
-            {
-                theMessenger.Send<OperationErrorMessage>(new OperationErrorMessage(ex.GetType().Name, ex.Message));
-                return string.Empty;
-            }
-        }
-
-        /// <summary>
-        /// Builds a collection of POInfo from a CSV file.
-        /// </summary>
-        /// <param name="fileName">CSV file to use.</param>
-        /// <returns>Collection of POInfo or an empty collection if there is an error.</returns>
-        public static IEnumerable<ReplacementInfo> LoadCSV(string fileName, IMessenger theMessenger)
-        {
-            try
-            {
-                List<ReplacementInfo> replacementInformation = new List<ReplacementInfo>();
-                using TextReader theReader = File.OpenText(fileName);
-                using CsvReader thecReader = new CsvReader(theReader, CultureInfo.InvariantCulture);
-
-                IEnumerable<ReplacementInfo> loadedPOInfo = thecReader.GetRecords<ReplacementInfo>();
-                foreach (ReplacementInfo currentPOInfo in loadedPOInfo)
-                {
-                    replacementInformation.Add(new ReplacementInfo()
+                    IStorageFile? file = await storageProvider.SaveFilePickerAsync(options);
+                    if (file?.CanBookmark == true)
                     {
-                        OldInfo = currentPOInfo.OldInfo,
-                        NewInfo = currentPOInfo.NewInfo
-                    });
+                        fileName = await file.SaveBookmarkAsync() ?? string.Empty;
+                    }
                 }
 
-                theReader.Close();
-                return replacementInformation;
+                return fileName;
             }
             catch (Exception ex)
             {
                 theMessenger.Send<OperationErrorMessage>(new OperationErrorMessage(ex.GetType().Name, ex.Message));
-                return new List<ReplacementInfo>();
-            }            
-
+                return fileName;
+            }
         }
 
         /// <summary>
@@ -143,12 +113,11 @@ namespace ReplaceAllMacroGenerator.Services
         {
             try
             {
-                List<ReplacementInfo> replacementInformation = new List<ReplacementInfo>();
+                List<ReplacementInfo> replacementInformation = [];
                 using TextReader theReader = File.OpenText(fileName);
-                using CsvReader thecReader = new CsvReader(theReader, CultureInfo.InvariantCulture);
+                using CsvReader thecReader = new (theReader, CultureInfo.InvariantCulture);
 
-                IAsyncEnumerable<ReplacementInfo> loadedPOInfo = thecReader.GetRecordsAsync<ReplacementInfo>();
-                await foreach (ReplacementInfo currentPOInfo in loadedPOInfo)
+                await foreach (ReplacementInfo currentPOInfo in thecReader.GetRecordsAsync<ReplacementInfo>())
                 {
                     replacementInformation.Add(new ReplacementInfo()
                     {
@@ -163,30 +132,7 @@ namespace ReplaceAllMacroGenerator.Services
             catch (Exception ex)
             {
                 theMessenger.Send<OperationErrorMessage>(new OperationErrorMessage(ex.GetType().Name, ex.Message));
-                return new List<ReplacementInfo>();
-            }            
-        }
-
-        /// <summary>
-        /// Saves a macro file.
-        /// </summary>
-        /// <param name="information">Collection of strings representing the macro.</param>
-        /// <param name="fileName">Macro file name.</param>
-        public static void SaveMacroFile(IEnumerable<string> information, string fileName, IMessenger theMessenger)
-        {
-            try
-            {
-                using (StreamWriter streamWriter = File.CreateText(fileName))
-                {
-                    foreach (string item in information)
-                    {
-                        streamWriter.WriteLine(item);
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                theMessenger.Send<OperationErrorMessage>(new OperationErrorMessage(ex.GetType().Name, ex.Message));
+                return [];
             }
         }
 
@@ -199,12 +145,10 @@ namespace ReplaceAllMacroGenerator.Services
         {
             try
             {
-                using (StreamWriter streamWriter = File.CreateText(fileName))
+                await using StreamWriter streamWriter = File.CreateText(fileName);
+                foreach (string item in information)
                 {
-                    foreach (string item in information)
-                    {
-                        await streamWriter.WriteLineAsync(item);
-                    }
+                    await streamWriter.WriteLineAsync(item);
                 }
             }
             catch (Exception ex)
