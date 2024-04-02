@@ -129,11 +129,23 @@ namespace ReplaceAllMacroGenerator.ViewModels
         {
             Busy = true;
 
-            AddReplacementView addView = new();
-            addView.DataContext = new AddReplacementInfoViewModel(addView, Messenger);
-            await addView.ShowDialog(_parentWindow);
+            await ShowAddPOWindow();
 
             Busy = false;
+        }
+
+        /// <summary>
+        /// Shows a window to add a new PO.
+        /// </summary>
+        /// <returns>Task</returns>
+        private async Task ShowAddPOWindow()
+        {
+            AddReplacementView addView = new();
+            AddReplacementInfoViewModel arivModel = new (addView, Messenger);
+            addView.DataContext = arivModel;
+            arivModel.IsActive = true;
+            await addView.ShowDialog(_parentWindow);
+            arivModel.IsActive = false;
         }
 
         /// <summary>
@@ -293,9 +305,13 @@ namespace ReplaceAllMacroGenerator.ViewModels
         private async Task ShowMessageBox(string message)
         {
             MessageBoxView mboxView = new();
-            mboxView.DataContext = new MessageBoxViewModel(mboxView, Messenger);
+            MessageBoxViewModel mbvModel = new (mboxView, Messenger);
+            mboxView.DataContext = mbvModel;
+            mbvModel.IsActive = true;
             Messenger.Send(new NotificationMessage(message));
+            mboxView.SizeToContent = SizeToContent.WidthAndHeight;
             await mboxView.ShowDialog(_parentWindow);
+            mbvModel.IsActive = false;
         }
     }
 }
